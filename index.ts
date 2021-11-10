@@ -58,23 +58,30 @@ const plugin: Plugin<Migrator3000MetaInput> = {
         }
         global.debug = config.debug === 'ON'
         try {
-            const parsedVersion = config.posthogVersion.split('.').map(digit => Number(digit))
+            const parsedVersion = config.posthogVersion.split('.').map((digit) => Number(digit))
             global.versionMajor = parsedVersion[0]
             global.versionMinor = parsedVersion[1]
         } catch (e) {
             throw new Error('Invalid PostHog version')
         }
     },
+
     exportEvents: async (events: PluginEventExtra[], { config, global }) => {
         // dont export live events, only historical ones
         if (events.length === 0) {
             return
         }
+        if (global.debug) {
+            console.log(`Starting export ${events.length} events`)
+            console.log(`Sample event:`, events[0])
+        }
         if (global.versionMajor > 1 || (global.versionMajor === 1 && global.versionMinor > 29)) {
             if (events[0].properties && events[0].properties['$$is_historical_export_event']) {
+                console.log(`Skipping live events`)
                 return
             }
         } else if (events[0].uuid) {
+            console.log(`Skipping live events`)
             return
         }
 
@@ -103,7 +110,6 @@ const plugin: Plugin<Migrator3000MetaInput> = {
         } else if (global.debug) {
             console.log('Skipping empty batch of events')
         }
-
     },
 }
 
